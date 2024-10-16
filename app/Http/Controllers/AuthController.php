@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Auth\Events\Registered;
+use App\Notifications\NewUserRegistered;
+use Illuminate\Support\Facades\Notification;
+
 
 class AuthController extends Controller
 {
@@ -32,6 +35,9 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
             'role' => $request->role,
         ]);
+
+        $admins = User::where('is_admin', true)->get(); // Adjust this based on your admin check
+        Notification::send($admins, new NewUserRegistered($user));
 
         event(new Registered($user));
 
