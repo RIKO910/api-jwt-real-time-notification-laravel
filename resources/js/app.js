@@ -1,3 +1,4 @@
+// resources/js/app.js
 import './bootstrap';
 
 import Echo from "laravel-echo";
@@ -5,12 +6,12 @@ import Pusher from "pusher-js";
 
 window.Pusher = Pusher;
 
-window.Echo = new Echo({
-    broadcaster: 'pusher',
-    key: 'your_pusher_app_key',
-    cluster: 'your_pusher_app_cluster',
-    encrypted: true,
-});
+// window.Echo = new Echo({
+//     broadcaster: 'pusher',
+//     key: 'your_pusher_app_key',
+//     cluster: 'your_pusher_app_cluster',
+//     encrypted: true,
+// });
 
 window.Echo.channel('admin-notifications')
     .listen('NewUserRegistered', (event) => {

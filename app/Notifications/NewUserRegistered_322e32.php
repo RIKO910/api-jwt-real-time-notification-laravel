@@ -2,11 +2,12 @@
 
 namespace App\Notifications;
 
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
 
-class NewUserRegistered extends Notification
+class NewUserRegistered322e32 extends Notification
 {
     use Queueable;
 
@@ -22,6 +23,7 @@ class NewUserRegistered extends Notification
     {
         return ['broadcast'];
     }
+
 
     public function toBroadcast($notifiable)
     {

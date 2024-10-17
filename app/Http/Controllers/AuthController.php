@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NewUserRegistered;
 use App\Models\ResetCodePassword;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -10,9 +11,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Facades\JWTAuth;
-use Illuminate\Auth\Events\Registered;
-use App\Notifications\NewUserRegistered;
-use Illuminate\Support\Facades\Notification;
 
 
 class AuthController extends Controller
@@ -38,10 +36,8 @@ class AuthController extends Controller
             'role' => $request->role,
         ]);
 
-        $admins = User::where('role', 'admin')->get();
-        Notification::send($admins, new NewUserRegistered($user));
-
-        event(new Registered($user));
+        event(new NewUserRegistered($user));
+        Log::info('Event dispatched: NewUserRegistered', [$user]);
 
         return response()->json(['message' => 'User registered successfully'], 201);
     }
