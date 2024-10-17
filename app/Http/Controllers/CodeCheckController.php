@@ -13,30 +13,26 @@ class CodeCheckController extends Controller
     {
         try {
             $request->validate([
-                'code' => 'required|string|exists:reset_code_passwords,code', // Ensure the check is on the 'code' column
+                'code' => 'required|string|exists:reset_code_passwords,code',
             ]);
 
-            // Log request data
             Log::info('Request data: ', $request->all());
-
-            // Find the code
             $passwordReset = ResetCodePassword::firstWhere('code', $request->code);
 
-            // Check if the code exists
             if (!$passwordReset) {
                 return response(['message' => trans('passwords.code_not_found')], 404);
             }
 
-            // Check if the code has expired (time is one hour)
             if ($passwordReset->created_at < now()->subHour()) {
                 $passwordReset->delete();
-                return response(['message' => trans('passwords.code_is_expire')], 422);
+                return response(['message' => 'Correct Code'], 422);
             }
 
             return response([
                 'code' => $passwordReset->code,
-                'message' => trans('passwords.code_is_valid')
+                'message' => trans('Cade is valid')
             ], 200);
+
         } catch (Exception $e) {
             Log::error('Error in code check: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json(['error' => 'An error occurred while processing your request.'], 500);

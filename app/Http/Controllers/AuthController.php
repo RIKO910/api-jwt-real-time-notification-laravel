@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ResetCodePassword;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Facades\JWTAuth;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Auth\Events\Registered;
 use App\Notifications\NewUserRegistered;
 use Illuminate\Support\Facades\Notification;
@@ -36,7 +38,7 @@ class AuthController extends Controller
             'role' => $request->role,
         ]);
 
-        $admins = User::where('is_admin', true)->get(); // Adjust this based on your admin check
+        $admins = User::where('role', 'admin')->get();
         Notification::send($admins, new NewUserRegistered($user));
 
         event(new Registered($user));
@@ -66,16 +68,26 @@ class AuthController extends Controller
     // Password reset request
     public function forgotPassword(Request $request)
     {
-        $request->validate(['email' => 'required|email']);
-        Password::sendResetLink($request->only('email'));
+        try {
+            $data = $request->validate([
+                'email' => 'required|email|exists:users',
+            ]);
 
-        return response()->json(['message' => 'Reset password link sent on your email id.']);
-    }
+            Log::info('Request data: ', $request->all());
+            ResetCodePassword::where('email', $request->email)->delete();
+            $data['code'] = mt_rand(100000, 999999);
+            $codeData     = ResetCodePassword::create($data);
 
-    // Email verification
-    public function verifyEmail(Request $request)
-    {
-        // Implement email verification logic here
+            // Send email to user with the reset code in HTML format
+            Mail::send('emails.reset_password', ['code' => $codeData->code], function($message) use ($request) {
+                $message->to($request->email)->subject('Password Reset');
+            });
+
+            return response(['message' => "Reset code sent successfully"], 200);
+        } catch (Exception $e) {
+            Log::error('Error in forgot-password: ' . $e->getMessage());
+            return response()->json(['error' => 'An error occurred while processing your request.'], 500);
+        }
     }
 
     // JWT token response
@@ -83,9 +95,8 @@ class AuthController extends Controller
     {
         return response()->json([
             'access_token' => $token,
-            'token_type' => 'bearer',
-            //'expires_in' => auth()->factory()->getTTL() * 60
-            'expires_in' => auth('api')->factory()->getTTL() * 60
+            'token_type'   => 'bearer',
+            'expires_in'   => auth('api')->factory()->getTTL() * 60
         ]);
     }
 }
